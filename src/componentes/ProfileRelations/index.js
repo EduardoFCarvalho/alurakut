@@ -8,6 +8,8 @@ export const ProfileRelationsBoxWrapper = styled(Box)`
     grid-template-columns: 1fr 1fr 1fr; 
     max-height: 220px;
     list-style: none;
+    height: 308px;
+    overflow: hidden;
   }
   img {
     object-fit: cover;
