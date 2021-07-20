@@ -45,11 +45,12 @@ function ProfileRelationsBox(propriedades) {
 
 export default function Home() {
   const usuarioAleatorio = 'EduardoFCarvalho';
-  const [comunidades, setComunidades] = React.useState([{
-    id: '918730179273471273408',
-    title: 'Eu odeio acordar cedo',
-    image: 'https://alurakut.vercel.app/capa-comunidade-01.jpg'
-  }]);
+  const [comunidades, setComunidades] = React.useState([]);
+  // const [comunidades, setComunidades] = React.useState([{
+  //   id: '918730179273471273408',
+  //   title: 'Eu odeio acordar cedo',
+  //   image: 'https://alurakut.vercel.app/capa-comunidade-01.jpg'
+  // }]);
   // const comunidades = comunidades[0];
   // const alteradorDeComunidades/setComunidades = comunidades[1];
 
@@ -67,6 +68,7 @@ export default function Home() {
   const [seguidores, setSeguidores] = React.useState([]);
   // 0 - buscar o array de dados do github
   React.useEffect(function() {
+    //GET
     fetch('https://api.github.com/users/peas/followers')
     .then(function (respostaDoServidor) {
       return respostaDoServidor.json();
@@ -75,6 +77,34 @@ export default function Home() {
       setSeguidores(respostaCompleta);
     })
   }, [])
+
+
+    // API GraphQL
+    fetch('https://graphql.datocms.com/', {
+      method: 'POST',
+      headers: {
+        'Authorization': '7f7590695431ea76f84616a4b4d32d',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ "query": `query {
+        allCommunities {
+          id 
+          title
+          imageUrl
+          creatorSlug
+        }
+      }` })
+    })
+    .then((response) => response.json()) // Pega o retorno do response.json() e já retorna
+    .then((respostaCompleta) => {
+      const comunidadesVindasDoDato = respostaCompleta.data.allCommunities;
+      console.log(comunidadesVindasDoDato)
+      setComunidades(comunidadesVindasDoDato)
+    })
+    // .then(function (response) {
+    //   return response.json()
+    // })
 
   return (
     <>
@@ -104,13 +134,31 @@ export default function Home() {
                 console.log('Campo: ', dadosDoForm.get('image'));
 
                 const comunidade = {
-                  id: new Date().toISOString(),
+                  // id: new Date().toISOString(),
                   title: dadosDoForm.get('title'),
-                  image: dadosDoForm.get('image'),
+                  // image: dadosDoForm.get('image'),
+                  imageUrl: dadosDoForm.get('image'),
+                  creatorSlug: usuarioAleatorio,
                 }
                 
-                const comunidadesAtualizadas = [...comunidades, comunidade];
-                setComunidades(comunidadesAtualizadas);
+                // const comunidadesAtualizadas = [...comunidades, comunidade];
+                // setComunidades(comunidadesAtualizadas);
+
+                
+                fetch('/api/comunidades', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(comunidade)
+                })
+                .then(async (response) => {
+                  const dados = await response.json();
+                  console.log(dados.registroCriado);
+                  const comunidade = dados.registroCriado;
+                  const comunidadesAtualizadas = [...comunidades, comunidade];
+                  setComunidades(comunidadesAtualizadas)
+                })
               }}>
               <div>
                 <input 
@@ -146,8 +194,10 @@ export default function Home() {
               {comunidades.map((itemAtual) => {
                 return (
                   <li key={itemAtual.id}>
-                    <a href={`/user/${itemAtual.title}`} >
-                      <img src={itemAtual.image} />
+                    {/* <a href={`/user/${itemAtual.title}`} >
+                      <img src={itemAtual.image} /> */}
+                      <a href={`/communities/${itemAtual.id}`}>
+                      <img src={itemAtual.imageUrl} />
                       <span>{itemAtual.title}</span>
                     </a>
                   </li>
